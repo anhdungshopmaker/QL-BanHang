@@ -3,6 +3,14 @@ import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 
 export async function POST(request: Request) {
+  return handleSignout(request);
+}
+
+export async function GET(request: Request) {
+  return handleSignout(request);
+}
+
+async function handleSignout(request: Request) {
   const supabase = await createClient()
 
   // Sign out from Supabase (this will handle clearing the session cookies via the cookie store)
