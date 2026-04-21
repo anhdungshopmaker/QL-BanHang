@@ -24,28 +24,7 @@ export default function Sidebar({ profile }: { profile: any }) {
     navItems.unshift({ icon: <ShieldCheck size={20} />, label: 'Hệ thống', href: '/dashboard/admin', activeColor: 'bg-red-600 shadow-red-200', hoverColor: 'hover:bg-red-50 hover:text-red-600' });
   }
 
-  const handleLogout = async () => {
-    try {
-      // Phải gọi server-side API route để Supabase SSR xóa được HttpOnly cookies
-      // (client-side signOut() không thể xóa HttpOnly cookies trên Vercel)
-      const response = await fetch('/api/auth/signout', { method: 'POST' });
-      
-      // Clear client-side storage
-      localStorage.clear();
-      sessionStorage.clear();
-
-      // Redirect sau khi server đã xóa session
-      if (response.redirected) {
-        window.location.href = response.url;
-      } else {
-        window.location.href = '/login';
-      }
-    } catch (error) {
-      console.error("Logout error", error);
-      window.location.href = '/login';
-    }
-  };
-
+  // native form submit will be used for logout
   return (
     <aside className="w-72 bg-white border-r border-slate-200 flex flex-col hidden lg:flex">
       <div className="p-8 border-b border-slate-50">
@@ -83,13 +62,16 @@ export default function Sidebar({ profile }: { profile: any }) {
       </nav>
 
       <div className="p-6 border-t border-slate-50">
-        <button 
-          onClick={handleLogout}
-          className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-all font-bold text-sm"
-        >
-          <LogOut size={20} />
-          Đăng xuất
-        </button>
+        <form action="/api/auth/signout" method="POST">
+          <button 
+            type="submit"
+            onClick={() => { localStorage.clear(); sessionStorage.clear(); }}
+            className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-all font-bold text-sm"
+          >
+            <LogOut size={20} />
+            Đăng xuất
+          </button>
+        </form>
       </div>
     </aside>
   );
