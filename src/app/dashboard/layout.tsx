@@ -28,8 +28,10 @@ export default async function DashboardLayout({
     // redirect('/register');
   }
 
+  return (
+    <div className="flex h-screen bg-slate-50 overflow-hidden">
+      <RealtimeOrderNotify />
       <Sidebar profile={profile} />
-
       {/* Main Content */}
        <main className="flex-1 flex flex-col overflow-hidden">
          <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-8 shrink-0">
