@@ -62,14 +62,19 @@ export default function Sidebar({ profile }: { profile: any }) {
       </nav>
 
       <div className="p-6 border-t border-slate-50">
-        <a 
-          href="/api/auth/signout"
-          onClick={() => { localStorage.clear(); sessionStorage.clear(); }}
-          className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-all font-bold text-sm"
-        >
-          <LogOut size={20} />
-          Đăng xuất
-        </a>
+        <form action="/api/auth/signout" method="POST">
+          <button
+            type="submit"
+            onClick={() => {
+              localStorage.clear();
+              sessionStorage.clear();
+            }}
+            className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-all font-bold text-sm"
+          >
+            <LogOut size={20} />
+            Đăng xuất
+          </button>
+        </form>
       </div>
     </aside>
   );
