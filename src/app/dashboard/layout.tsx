@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { LayoutDashboard, Store, Package, Users, BarChart3, Settings, LogOut, Menu, Grid2X2, FlaskConical, Database, ShieldCheck } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import Link from 'next/link';
 import RealtimeOrderNotify from '@/components/RealtimeOrderNotify';
+import Sidebar from '@/components/Sidebar';
 
 export default async function DashboardLayout({
   children,
@@ -27,60 +28,7 @@ export default async function DashboardLayout({
     // redirect('/register');
   }
 
-  const navItems = [
-    { icon: <LayoutDashboard size={20} />, label: 'Tổng quan', href: '/dashboard' },
-    { icon: <Store size={20} />, label: 'Quầy POS', href: '/dashboard/pos' },
-    { icon: <Grid2X2 size={20} />, label: 'Phòng / Bàn', href: '/dashboard/tables' },
-    { icon: <Package size={20} />, label: 'Sản phẩm', href: '/dashboard/products' },
-    { icon: <Database size={20} />, label: 'Kho hàng', href: '/dashboard/inventory' },
-    { icon: <FlaskConical size={20} />, label: 'Nguyên liệu', href: '/dashboard/ingredients' },
-    { icon: <Users size={20} />, label: 'Khách hàng', href: '/dashboard/customers' },
-    { icon: <Users size={20} />, label: 'Nhân viên', href: '/dashboard/employees' },
-    { icon: <BarChart3 size={20} />, label: 'Báo cáo', href: '/dashboard/reports' },
-    { icon: <Settings size={20} />, label: 'Cài đặt', href: '/dashboard/settings' },
-  ];
-
-  if (profile?.role === 'super_admin') {
-    navItems.unshift({ icon: <ShieldCheck size={20} />, label: 'Hệ thống', href: '/dashboard/admin' });
-  }
-
-  return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
-      <RealtimeOrderNotify />
-      {/* Sidebar */}
-      <aside className="w-72 bg-white border-r border-slate-200 flex flex-col hidden lg:flex">
-        <div className="p-8 border-b border-slate-50">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-100">
-               <Store size={20} />
-             </div>
-             <div>
-               <h2 className="text-sm font-black text-slate-900 leading-none truncate w-40">{profile?.shops?.name || 'Cửa hàng hệ thống'}</h2>
-               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{profile?.role}</p>
-             </div>
-          </div>
-        </div>
-
-        <nav className="flex-1 p-4 space-y-2 mt-4 overflow-y-auto">
-          {navItems.map((item) => (
-            <Link 
-              key={item.href} 
-              href={item.href}
-              className="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-all font-bold text-sm group"
-            >
-              <span className="group-hover:scale-110 transition-transform">{item.icon}</span>
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="p-6 border-t border-slate-50">
-            <button className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-rose-500 hover:bg-rose-50 transition-all font-bold text-sm">
-              <LogOut size={20} />
-              Đăng xuất
-            </button>
-        </div>
-      </aside>
+      <Sidebar profile={profile} />
 
       {/* Main Content */}
        <main className="flex-1 flex flex-col overflow-hidden">
