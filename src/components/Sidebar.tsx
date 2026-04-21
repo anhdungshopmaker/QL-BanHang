@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Store, Package, Users, BarChart3, Settings, LogOut, Grid2X2, FlaskConical, Database, ShieldCheck } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 export default function Sidebar({ profile }: { profile: any }) {
   const pathname = usePathname();
@@ -23,6 +24,29 @@ export default function Sidebar({ profile }: { profile: any }) {
   if (profile?.role === 'super_admin') {
     navItems.unshift({ icon: <ShieldCheck size={20} />, label: 'Hệ thống', href: '/dashboard/admin', activeColor: 'bg-red-600 shadow-red-200', hoverColor: 'hover:bg-red-50 hover:text-red-600' });
   }
+
+  const handleLogout = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      
+      // Clear all items from localStorage and sessionStorage
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // Brutally clear cookies by setting expiry to past
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+
+      window.location.href = '/login';
+    } catch (error) {
+      console.error("Logout error", error);
+      window.location.href = '/login';
+    }
+  };
 
   return (
     <aside className="w-72 bg-white border-r border-slate-200 flex flex-col hidden lg:flex">
@@ -61,12 +85,13 @@ export default function Sidebar({ profile }: { profile: any }) {
       </nav>
 
       <div className="p-6 border-t border-slate-50">
-        <form action="/api/auth/signout" method="POST" className="w-full">
-          <button type="submit" className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-all font-bold text-sm">
-            <LogOut size={20} />
-            Đăng xuất
-          </button>
-        </form>
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-all font-bold text-sm"
+        >
+          <LogOut size={20} />
+          Đăng xuất
+        </button>
       </div>
     </aside>
   );
