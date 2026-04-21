@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { LayoutDashboard, Store, Package, Users, BarChart3, Settings, LogOut, Grid2X2, FlaskConical, Database, ShieldCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 export default function Sidebar({ profile }: { profile: any }) {
   const pathname = usePathname();
+  const router = useRouter();
 
   const navItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Tổng quan', href: '/dashboard', activeColor: 'bg-indigo-600 shadow-indigo-200', hoverColor: 'hover:bg-indigo-50 hover:text-indigo-600' },
@@ -26,9 +27,15 @@ export default function Sidebar({ profile }: { profile: any }) {
   }
 
   const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.href = '/login';
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.refresh();
+      router.push('/login');
+    } catch (error) {
+      console.error("Logout error", error);
+      window.location.href = '/login';
+    }
   };
 
   return (
