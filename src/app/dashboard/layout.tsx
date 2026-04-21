@@ -5,6 +5,13 @@ import Link from 'next/link';
 import RealtimeOrderNotify from '@/components/RealtimeOrderNotify';
 import Sidebar from '@/components/Sidebar';
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Chào buổi sáng,';
+  if (hour < 18) return 'Chào buổi chiều,';
+  return 'Chào buổi tối,';
+}
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -40,7 +47,7 @@ export default async function DashboardLayout({
               <h1 className="font-black text-slate-900">POS SAAS</h1>
             </div>
             <div className="hidden lg:block">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Chào buổi sáng,</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{getGreeting()}</p>
               <h1 className="text-lg font-black text-slate-900">{profile?.full_name || 'Quản lý'} 👋</h1>
             </div>
             

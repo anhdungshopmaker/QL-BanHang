@@ -10,6 +10,9 @@ interface ScannerProps {
 
 export default function QRScanner({ onScan, onClose }: ScannerProps) {
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  // Store onScan in a ref so the useEffect doesn't restart when parent re-renders
+  const onScanRef = useRef(onScan);
+  useEffect(() => { onScanRef.current = onScan; }, [onScan]);
 
   useEffect(() => {
     scannerRef.current = new Html5QrcodeScanner(
@@ -19,12 +22,11 @@ export default function QRScanner({ onScan, onClose }: ScannerProps) {
     );
 
     const onScanSuccess = (decodedText: string) => {
-      onScan(decodedText);
-      // Optional: Sound effect
+      onScanRef.current(decodedText);
     };
 
-    scannerRef.current.render(onScanSuccess, (error) => {
-      // Handle scan failure, usually better to ignore
+    scannerRef.current.render(onScanSuccess, () => {
+      // suppress scan errors
     });
 
     return () => {
@@ -32,7 +34,8 @@ export default function QRScanner({ onScan, onClose }: ScannerProps) {
         scannerRef.current.clear().catch(err => console.error("Failed to clear scanner", err));
       }
     };
-  }, [onScan]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally empty — scanner mounts once
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-6">

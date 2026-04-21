@@ -2,20 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Package, Plus, Search, MoreVertical, Edit2, Trash2, ImageIcon, Loader2, QrCode as QrIcon } from 'lucide-react';
+import { Package, Plus, Search, MoreVertical, Edit2, Trash2, ImageIcon, Loader2 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 export default function ProductManagement() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const supabase = createClient();
 
   const fetchProducts = async () => {
@@ -50,6 +46,21 @@ export default function ProductManagement() {
     setSaving(false);
   };
 
+  const handleDeleteProduct = async (id: string) => {
+    if (!confirm('Xóa sản phẩm này? Hành động không thể hoàn tác!')) return;
+    await supabase.from('products').delete().eq('id', id);
+    fetchProducts();
+  };
+
+  const filteredProducts = products.filter(p => {
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const matchCat = categoryFilter === 'all' || p.category === categoryFilter;
+    return matchSearch && matchCat;
+  });
+
+  // Get unique categories from data
+  const categories = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -66,16 +77,26 @@ export default function ProductManagement() {
         </button>
       </div>
 
-      {/* Search & Filter */}
       <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-4 top-3.5 text-slate-400" size={18} />
-          <input type="text" placeholder="Tìm kiếm tên sản phẩm..." className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-4 py-3 text-sm font-medium outline-none focus:border-indigo-500" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Tìm kiếm tên sản phẩm..."
+            className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-4 py-3 text-sm font-medium outline-none focus:border-indigo-500"
+          />
         </div>
-        <select className="bg-slate-50 border border-slate-100 rounded-2xl px-6 py-3 text-xs font-black uppercase tracking-widest outline-none w-full md:w-auto">
-          <option>Tất cả danh mục</option>
-          <option>Đồ ăn</option>
-          <option>Đồ uống</option>
+        <select
+          value={categoryFilter}
+          onChange={e => setCategoryFilter(e.target.value)}
+          className="bg-slate-50 border border-slate-100 rounded-2xl px-6 py-3 text-xs font-black uppercase tracking-widest outline-none w-full md:w-auto"
+        >
+          <option value="all">Tất cả danh mục</option>
+          {categories.map(c => (
+            <option key={c} value={c}>{c}</option>
+          ))}
         </select>
       </div>
 
@@ -90,7 +111,7 @@ export default function ProductManagement() {
              <Package size={48} className="mx-auto text-slate-200 mb-4" />
              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Chưa có sản phẩm nào</p>
           </div>
-        ) : products.map((product) => (
+        ) : filteredProducts.map((product) => (
           <div key={product.id} className="bg-white group rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-2xl transition-all overflow-hidden relative">
             <div className="h-40 bg-slate-50 flex items-center justify-center relative overflow-hidden">
                {product.image_url ? (
@@ -104,8 +125,13 @@ export default function ProductManagement() {
                   </div>
                </div>
                <div className="absolute top-4 right-4 flex gap-2 translate-y-10 group-hover:translate-y-0 transition-all">
-                  <button className="p-2 bg-white text-slate-600 rounded-xl shadow-lg border border-slate-100"><Edit2 size={14}/></button>
-                  <button className="p-2 bg-rose-50 text-rose-500 rounded-xl shadow-lg border border-rose-100"><Trash2 size={14}/></button>
+                 <button className="p-2 bg-white text-slate-600 rounded-xl shadow-lg border border-slate-100"><Edit2 size={14}/></button>
+                 <button
+                   onClick={() => handleDeleteProduct(product.id)}
+                   className="p-2 bg-rose-50 text-rose-500 rounded-xl shadow-lg border border-rose-100 hover:bg-rose-500 hover:text-white transition-all"
+                 >
+                   <Trash2 size={14}/>
+                 </button>
                </div>
             </div>
             <div className="p-6">

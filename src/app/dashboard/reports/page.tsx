@@ -16,38 +16,71 @@ export default function ReportsPage() {
     const { data: { user } } = await supabase.auth.getUser();
     const { data: profile } = await supabase.from('profiles').select('shop_id').eq('id', user?.id).single();
 
-    if (!profile) return;
+    if (!profile?.shop_id) { setLoading(false); return; }
 
-    // 1. Get stats
-    const { data: orders } = await supabase
+    // Build date filter based on timeRange
+    const now = new Date();
+    let startDate: string | null = null;
+    let endDate: string = now.toISOString();
+
+    if (timeRange === 'today') {
+      const d = new Date(now); d.setHours(0,0,0,0);
+      startDate = d.toISOString();
+    } else if (timeRange === 'week') {
+      const d = new Date(now); d.setDate(d.getDate() - 7);
+      startDate = d.toISOString();
+    } else if (timeRange === 'month') {
+      const d = new Date(now); d.setMonth(d.getMonth() - 1);
+      startDate = d.toISOString();
+    } else if (timeRange === 'year') {
+      const d = new Date(now); d.setFullYear(d.getFullYear() - 1);
+      startDate = d.toISOString();
+    }
+
+    // 1. Get orders filtered by shop + date range
+    let ordersQuery = supabase
       .from('orders')
-      .select('*')
+      .select('id, total_amount')
       .eq('shop_id', profile.shop_id)
-      .eq('status', 'completed');
+      .eq('status', 'completed')
+      .lte('created_at', endDate);
+    if (startDate) ordersQuery = ordersQuery.gte('created_at', startDate);
+    const { data: orders } = await ordersQuery;
 
     const totalRevenue = orders?.reduce((sum, o) => sum + Number(o.total_amount), 0) || 0;
     const totalOrders = orders?.length || 0;
 
-    // 2. Get top products
-    const { data: items } = await supabase
-        .from('order_items')
-        .select('*, products(name, category)')
-        .order('quantity', { ascending: false });
-    
-    // Simple aggregation for top products
-    const productStats: any = {};
-    items?.forEach((item: any) => {
+    // 2. Get top products — scoped to THIS shop's orders only via inner join
+    let itemsQuery = supabase
+      .from('order_items')
+      .select(`
+        quantity,
+        price,
+        products(name, category),
+        orders!inner(shop_id, created_at, status)
+      `)
+      .eq('orders.shop_id', profile.shop_id)
+      .eq('orders.status', 'completed')
+      .lte('orders.created_at', endDate);
+    if (startDate) itemsQuery = itemsQuery.gte('orders.created_at', startDate);
+
+    const { data: items } = await itemsQuery;
+
+    let topProducts: any[] = [];
+    if (items && items.length > 0) {
+      const productStats: Record<string, any> = {};
+      items.forEach((item: any) => {
         if (!item.products) return;
         const name = item.products.name;
         if (!productStats[name]) productStats[name] = { name, quantity: 0, revenue: 0 };
         productStats[name].quantity += item.quantity;
         productStats[name].revenue += item.quantity * Number(item.price);
-    });
+      });
+      topProducts = Object.values(productStats).sort((a: any, b: any) => b.quantity - a.quantity).slice(0, 5);
+    }
 
-    const sortedProducts = Object.values(productStats).sort((a: any, b: any) => b.quantity - a.quantity).slice(0, 5);
-    
     setStats({ totalRevenue, totalOrders });
-    setTopProducts(sortedProducts);
+    setTopProducts(topProducts);
     setLoading(false);
   };
 

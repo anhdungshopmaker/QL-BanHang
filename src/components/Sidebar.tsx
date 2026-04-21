@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Store, Package, Users, BarChart3, Settings, LogOut, Grid2X2, FlaskConical, Database, ShieldCheck } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 
 export default function Sidebar({ profile }: { profile: any }) {
   const pathname = usePathname();
@@ -27,21 +26,20 @@ export default function Sidebar({ profile }: { profile: any }) {
 
   const handleLogout = async () => {
     try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
+      // Phải gọi server-side API route để Supabase SSR xóa được HttpOnly cookies
+      // (client-side signOut() không thể xóa HttpOnly cookies trên Vercel)
+      const response = await fetch('/api/auth/signout', { method: 'POST' });
       
-      // Clear all items from localStorage and sessionStorage
+      // Clear client-side storage
       localStorage.clear();
       sessionStorage.clear();
 
-      // Brutally clear cookies by setting expiry to past
-      document.cookie.split(";").forEach((c) => {
-        document.cookie = c
-          .replace(/^ +/, "")
-          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-      });
-
-      window.location.href = '/login';
+      // Redirect sau khi server đã xóa session
+      if (response.redirected) {
+        window.location.href = response.url;
+      } else {
+        window.location.href = '/login';
+      }
     } catch (error) {
       console.error("Logout error", error);
       window.location.href = '/login';

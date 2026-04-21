@@ -10,7 +10,11 @@ export default function TableManagement() {
   const [loading, setLoading] = useState(true);
   const [newTable, setNewTable] = useState('');
   const [shopCode, setShopCode] = useState('');
+  const [origin, setOrigin] = useState('');
   const supabase = createClient();
+
+  // Capture window.location.origin only on client
+  useEffect(() => { setOrigin(window.location.origin); }, []);
 
   const fetchData = async () => {
     setLoading(true);
@@ -81,7 +85,7 @@ export default function TableManagement() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {tables.map(table => {
-              const qrUrl = `${window.location.origin}/order/${shopCode}/${table.id}`;
+              const qrUrl = `${origin}/order/${shopCode}/${table.id}`;
               return (
                 <div key={table.id} className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 hover:border-indigo-200 hover:bg-white hover:shadow-2xl transition-all group relative">
                    <div className="flex items-start justify-between mb-4">

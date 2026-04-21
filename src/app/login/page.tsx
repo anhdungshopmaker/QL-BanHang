@@ -28,6 +28,7 @@ export default function Login() {
       });
 
       if (authError) throw authError;
+      router.refresh();
       router.push('/dashboard');
     } catch (err: any) {
       setError('Email hoặc mật khẩu không chính xác, vui lòng kiểm tra lại.');

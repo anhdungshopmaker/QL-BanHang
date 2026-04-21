@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Building2, User2, Mail, Lock, Store, ArrowRight, Loader2, Link } from 'lucide-react';
-import LinkItem from 'next/link';
+import { Building2, User2, Mail, Lock, Store, ArrowRight, Loader2, Link as LinkIcon } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Register() {
   const [loading, setLoading] = useState(false);
@@ -84,6 +84,7 @@ export default function Register() {
           .eq('id', invite.id);
       }
 
+      router.refresh();
       router.push('/dashboard');
     } catch (err: any) {
       console.error(err);
@@ -159,7 +160,7 @@ export default function Register() {
               </div>
             ) : (
               <div className="relative border-t border-slate-100 pt-4 mt-2">
-                <Link className="absolute left-4 top-8 text-slate-400" size={18} />
+                <LinkIcon className="absolute left-4 top-8 text-slate-400" size={18} />
                 <input name="joinCode" type="text" placeholder="Nhập mã mời (Invite Code)" required={mode === 'join'} className="pl-12 w-full bg-teal-50/30 border border-teal-100 rounded-xl px-4 py-3.5 outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-50 transition-all font-bold text-teal-600 placeholder:text-teal-300" />
               </div>
             )}
@@ -177,7 +178,7 @@ export default function Register() {
           </form>
 
           <p className="text-center mt-8 text-xs font-bold text-slate-400 uppercase tracking-widest">
-            Đã có tài khoản? <LinkItem href="/login" className="text-indigo-600 hover:underline">Đăng nhập</LinkItem>
+            Đã có tài khoản? <Link href="/login" className="text-indigo-600 hover:underline">Đăng nhập</Link>
           </p>
         </div>
       </div>
