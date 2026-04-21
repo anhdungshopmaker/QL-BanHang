@@ -1,13 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Store, Package, Users, BarChart3, Settings, LogOut, Grid2X2, FlaskConical, Database, ShieldCheck } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 
 export default function Sidebar({ profile }: { profile: any }) {
   const pathname = usePathname();
-  const router = useRouter();
 
   const navItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Tổng quan', href: '/dashboard', activeColor: 'bg-indigo-600 shadow-indigo-200', hoverColor: 'hover:bg-indigo-50 hover:text-indigo-600' },
@@ -25,18 +23,6 @@ export default function Sidebar({ profile }: { profile: any }) {
   if (profile?.role === 'super_admin') {
     navItems.unshift({ icon: <ShieldCheck size={20} />, label: 'Hệ thống', href: '/dashboard/admin', activeColor: 'bg-red-600 shadow-red-200', hoverColor: 'hover:bg-red-50 hover:text-red-600' });
   }
-
-  const handleLogout = async () => {
-    try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-      router.refresh();
-      router.push('/login');
-    } catch (error) {
-      console.error("Logout error", error);
-      window.location.href = '/login';
-    }
-  };
 
   return (
     <aside className="w-72 bg-white border-r border-slate-200 flex flex-col hidden lg:flex">
@@ -75,10 +61,12 @@ export default function Sidebar({ profile }: { profile: any }) {
       </nav>
 
       <div className="p-6 border-t border-slate-50">
-          <button onClick={handleLogout} className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-all font-bold text-sm">
+        <form action="/api/auth/signout" method="POST" className="w-full">
+          <button type="submit" className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-all font-bold text-sm">
             <LogOut size={20} />
             Đăng xuất
           </button>
+        </form>
       </div>
     </aside>
   );
