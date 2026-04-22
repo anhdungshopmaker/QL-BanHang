@@ -12,7 +12,8 @@ export default function POSInterface() {
   const [checkingOut, setCheckingOut] = useState(false);
   const [search, setSearch] = useState('');
   const [showScanner, setShowScanner] = useState(false);
-  const [orderDiscount, setOrderDiscount] = useState(0); // Giảm giá toàn đơn
+  const [orderDiscount, setOrderDiscount] = useState(0); // Giá trị giảm giá toàn đơn
+  const [orderDiscountType, setOrderDiscountType] = useState<'amount' | 'percent'>('amount'); 
   const [manualItem, setManualItem] = useState({ name: '', price: 0 }); // Món ngoài menu
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   
@@ -48,7 +49,7 @@ export default function POSInterface() {
     if (existing) {
       setCart(cart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
     } else {
-      setCart([...cart, { ...product, quantity: 1, discount: 0 }]); // Mặc định giảm giá = 0
+      setCart([...cart, { ...product, quantity: 1, discount: 0, discountType: 'amount' }]); // Mặc định giảm giá = 0
     }
   };
 
@@ -64,6 +65,7 @@ export default function POSInterface() {
       price: manualItem.price,
       quantity: 1,
       discount: 0,
+      discountType: 'amount',
       is_manual: true
     };
     setCart([...cart, newItem]);
@@ -75,19 +77,33 @@ export default function POSInterface() {
     setCart(cart.map(item => item.id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item));
   };
 
-  const updateItemDiscount = (id: string, discountValue: number) => {
-    setCart(cart.map(item => item.id === id ? { ...item, discount: Math.max(0, discountValue) } : item));
+  const updateItemDiscount = (id: string, discountValue: number, type: 'amount' | 'percent' = 'amount') => {
+    setCart(cart.map(item => item.id === id ? { ...item, discount: Math.max(0, discountValue), discountType: type } : item));
   };
 
   const removeItem = (id: string) => setCart(cart.filter(item => item.id !== id));
 
-  // TÍNH TOÁN TỔNG TIỀN (CÓ GIẢM GIÁ)
+  // TÍNH TOÁN TỔNG TIỀN (CÓ GIẢM GIÁ THEO % HOẶC TIỀN MẶT)
   const calculateTotal = () => {
     const itemsTotal = cart.reduce((sum, item) => {
-      const priceAfterDiscount = item.price - (item.discount || 0);
+      let discountAmount = 0;
+      if (item.discountType === 'percent') {
+        discountAmount = (item.price * (item.discount || 0)) / 100;
+      } else {
+        discountAmount = item.discount || 0;
+      }
+      const priceAfterDiscount = item.price - discountAmount;
       return sum + (priceAfterDiscount * item.quantity);
     }, 0);
-    return Math.max(0, itemsTotal - orderDiscount);
+
+    let finalOrderDiscount = 0;
+    if (orderDiscountType === 'percent') {
+      finalOrderDiscount = (itemsTotal * orderDiscount) / 100;
+    } else {
+      finalOrderDiscount = orderDiscount;
+    }
+
+    return Math.max(0, itemsTotal - finalOrderDiscount);
   };
 
   // XỬ LÝ THANH TOÁN (LƯU ĐẦY ĐỦ THÔNG TIN GIÁ GỐC + GIẢM GIÁ)
@@ -101,6 +117,18 @@ export default function POSInterface() {
       
       const finalTotal = calculateTotal();
       
+      let finalOrderDiscountValue = 0;
+      const itemsTotalBeforeOrderDiscount = cart.reduce((sum, item) => {
+          let itemDiscount = item.discountType === 'percent' ? (item.price * item.discount / 100) : item.discount;
+          return sum + (item.price - itemDiscount) * item.quantity;
+      }, 0);
+
+      if (orderDiscountType === 'percent') {
+        finalOrderDiscountValue = (itemsTotalBeforeOrderDiscount * orderDiscount) / 100;
+      } else {
+        finalOrderDiscountValue = orderDiscount;
+      }
+
       // 1. Tạo đơn hàng tổng [orders]
       const { data: order, error: orderErr } = await supabase
         .from('orders')
@@ -108,7 +136,7 @@ export default function POSInterface() {
             shop_id: profile?.shop_id, 
             profile_id: user?.id,
             total_amount: finalTotal,
-            discount_total: orderDiscount, // Lưu giảm giá tổng đơn
+            discount_total: finalOrderDiscountValue, // Lưu giá trị tiền mặt đã giảm
             status: 'completed'
         })
         .select().single();
@@ -116,15 +144,18 @@ export default function POSInterface() {
       if (orderErr) throw orderErr;
 
       // 2. Tạo chi tiết món [order_items] (Lưu giá chi tiết để báo cáo)
-      const orderItems = cart.map(item => ({
-        order_id: order.id,
-        product_id: item.is_manual ? null : item.id, // Món thủ công không có product_id
-        manual_name: item.is_manual ? item.name : null,
-        quantity: item.quantity,
-        price_original: item.price, // Giá gốc
-        discount: item.discount || 0, // Giảm giá từng món
-        final_price: item.price - (item.discount || 0) // Giá cuối cùng
-      }));
+      const orderItems = cart.map(item => {
+        const itemDiscountValue = item.discountType === 'percent' ? (item.price * (item.discount || 0) / 100) : (item.discount || 0);
+        return {
+          order_id: order.id,
+          product_id: item.is_manual ? null : item.id,
+          manual_name: item.is_manual ? item.name : null,
+          quantity: item.quantity,
+          price_original: item.price,
+          discount: itemDiscountValue,
+          final_price: item.price - itemDiscountValue
+        };
+      });
 
       const { error: itemsErr } = await supabase.from('order_items').insert(orderItems);
       if (itemsErr) throw itemsErr;
@@ -132,6 +163,7 @@ export default function POSInterface() {
       showToast('Thanh toán thành công!');
       setCart([]);
       setOrderDiscount(0);
+      setOrderDiscountType('amount');
     } catch (err: any) {
       showToast(err.message || 'Lỗi thanh toán', 'error');
     } finally {
@@ -245,8 +277,17 @@ export default function POSInterface() {
                       <div className="flex items-center gap-2 mt-1 pt-2 border-t border-slate-100/50">
                          <Tag size={12} className="text-rose-500" />
                          <span className="text-[9px] font-black text-slate-400 uppercase">Giảm:</span>
-                         <input type="number" value={item.discount || ''} onChange={e => updateItemDiscount(item.id, Number(e.target.value))}
-                           placeholder="Số tiền..." className="bg-white border border-slate-100 rounded px-2 py-0.5 text-[10px] font-bold w-full outline-none focus:border-rose-300" />
+                         <div className="flex-1 flex bg-white border border-slate-100 rounded overflow-hidden">
+                            <input type="number" value={item.discount || ''} 
+                              onChange={e => updateItemDiscount(item.id, Number(e.target.value), item.discountType)}
+                              placeholder={item.discountType === 'percent' ? "%" : "đ"} 
+                              className="w-full px-2 py-0.5 text-[10px] font-bold outline-none focus:bg-rose-50" />
+                            <button 
+                              onClick={() => updateItemDiscount(item.id, item.discount, item.discountType === 'amount' ? 'percent' : 'amount')}
+                              className={`px-2 text-[9px] font-black transition-colors ${item.discountType === 'percent' ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                              {item.discountType === 'percent' ? '%' : 'đ'}
+                            </button>
+                         </div>
                       </div>
                    </div>
                  ))
@@ -260,13 +301,28 @@ export default function POSInterface() {
                     <Tag size={14} className="text-rose-400" />
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Giảm toàn đơn</p>
                   </div>
-                  <input type="number" value={orderDiscount || ''} onChange={e => setOrderDiscount(Number(e.target.value))}
-                    className="w-24 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs font-black text-rose-400 outline-none focus:bg-white/10" />
+                  <div className="flex bg-white/5 border border-white/10 rounded-lg overflow-hidden">
+                    <input type="number" value={orderDiscount || ''} onChange={e => setOrderDiscount(Number(e.target.value))}
+                      placeholder={orderDiscountType === 'percent' ? "%" : "đ"}
+                      className="w-20 px-3 py-1.5 text-xs font-black text-rose-400 outline-none focus:bg-white/10 bg-transparent" />
+                    <button 
+                      onClick={() => setOrderDiscountType(orderDiscountType === 'amount' ? 'percent' : 'amount')}
+                      className={`px-3 text-[10px] font-black transition-colors ${orderDiscountType === 'percent' ? 'bg-rose-500 text-white' : 'bg-white/10 text-slate-400'}`}>
+                      {orderDiscountType === 'percent' ? '%' : 'đ'}
+                    </button>
+                  </div>
                </div>
 
                <div className="flex items-center justify-between mb-2 opacity-60">
                   <p className="text-[10px] font-bold uppercase tracking-widest">Tạm tính</p>
-                  <p className="text-xs font-black">{Intl.NumberFormat('vi-VN').format(calculateTotal() + orderDiscount)}đ</p>
+                  <p className="text-xs font-black">
+                    {Intl.NumberFormat('vi-VN').format(
+                      cart.reduce((sum, item) => {
+                        let itemDiscount = item.discountType === 'percent' ? (item.price * item.discount / 100) : item.discount;
+                        return sum + (item.price - itemDiscount) * item.quantity;
+                      }, 0)
+                    )}đ
+                  </p>
                </div>
                <div className="flex items-center justify-between mb-6">
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Tổng cộng</p>
@@ -282,6 +338,7 @@ export default function POSInterface() {
             </div>
          </div>
       </div>
+
 
       {showScanner && <QRScanner onScan={handleScan} onClose={() => setShowScanner(false)} />}
     </div>
