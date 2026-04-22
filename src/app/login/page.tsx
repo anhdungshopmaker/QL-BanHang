@@ -94,49 +94,26 @@ export default function Login() {
             </div>
             <div>
               <h1 className="text-2xl font-black tracking-tight text-slate-900 leading-none">POS LOGIN</h1>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1.5">Truy cập hệ thống</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1.5">Đăng nhập hệ thống doanh nghiệp</p>
             </div>
           </div>
 
-          <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-8">
-            <button 
-              onClick={() => setLoginMode('enterprise')}
-              className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${loginMode === 'enterprise' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              Mã Nhân Viên
-            </button>
-            <button 
-              onClick={() => setLoginMode('standard')}
-              className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${loginMode === 'standard' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              Email Cá Nhân
-            </button>
-          </div>
-
           <form onSubmit={handleLogin} className="space-y-4">
-            {loginMode === 'enterprise' ? (
-              <>
-                <div className="relative">
-                  <Hash className="absolute left-4 top-4 text-slate-400" size={18} />
-                  <input name="shopCode" type="text" placeholder="Mã cửa hàng (VD: AB123)" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-black text-indigo-600 placeholder:font-bold" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="relative">
-                    <User2 className="absolute left-4 top-4 text-slate-400" size={18} />
-                    <input name="username" type="text" placeholder="Tên user" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-bold" />
-                  </div>
-                  <div className="relative">
-                    <Hash className="absolute left-4 top-4 text-slate-400" size={18} />
-                    <input name="staffCode" type="text" placeholder="Mã NV" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-bold" />
-                  </div>
-                </div>
-              </>
-            ) : (
+            <div className="relative">
+              <Hash className="absolute left-4 top-4 text-slate-400" size={18} />
+              <input name="shopCode" type="text" placeholder="Mã cửa hàng (VD: SYS01)" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-black text-indigo-600 placeholder:font-bold uppercase" />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
               <div className="relative">
                 <User2 className="absolute left-4 top-4 text-slate-400" size={18} />
-                <input name="email" type="email" placeholder="Email đăng nhập" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-medium" />
+                <input name="username" type="text" placeholder="Tên user" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-bold" />
               </div>
-            )}
+              <div className="relative">
+                <Hash className="absolute left-4 top-4 text-slate-400" size={18} />
+                <input name="staffCode" type="text" placeholder="Mã NV" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-bold uppercase" />
+              </div>
+            </div>
 
             <div className="relative">
               <Lock className="absolute left-4 top-4 text-slate-400" size={18} />
