@@ -8,8 +8,8 @@ export async function POST(request: Request) {
   // 1. logout Supabase
   await supabase.auth.signOut()
 
-  // 2. Lấy cookieStore đồng bộ (sync) theo yêu cầu để tránh lỗi context
-  const cookieStore = cookies()
+  // 2. Lấy cookieStore (Bắt buộc dùng await trong phiên bản Next.js này)
+  const cookieStore = await cookies()
   const allCookies = cookieStore.getAll()
 
   const response = NextResponse.redirect(
