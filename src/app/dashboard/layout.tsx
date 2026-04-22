@@ -30,9 +30,18 @@ export default async function DashboardLayout({
     .eq('id', user.id)
     .single();
 
-  if (!profile?.shop_id && profile?.role !== 'super_admin') {
-    // Should verify if they need to join or create a shop
-    // redirect('/register');
+  // SaaS ACCESS CONTROL
+  if (profile?.role !== 'super_admin') {
+    if (!profile?.shop_id) {
+       // Optional: Redirect to shop creation if allowed for staff
+    } else {
+       const shop = profile.shops;
+       const isExpired = shop?.expires_at ? new Date(shop.expires_at) < new Date() : false;
+       
+       if (shop?.status === 'locked' || isExpired) {
+         redirect('/blocked');
+       }
+    }
   }
 
   return (
