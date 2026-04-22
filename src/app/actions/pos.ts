@@ -7,7 +7,13 @@ export async function processCheckoutAction(formData: {
   cart: any[],
   orderDiscount: number,
   orderDiscountType: 'amount' | 'percent',
-  finalTotal: number
+  finalTotal: number,
+  shift_id?: string,
+  register_id?: string,
+  payment_method?: string,
+  order_type?: string,
+  table_id?: string,
+  session_id?: string
 }) {
   const supabase = await createClient()
 
@@ -54,6 +60,12 @@ export async function processCheckoutAction(formData: {
         created_by_name: profile.full_name,
         total_amount: serverTotal,
         discount_total: serverCalculatedDiscount,
+        shift_id: formData.shift_id || null,
+        register_id: formData.register_id || null,
+        payment_method: formData.payment_method || 'cash',
+        order_type: formData.order_type || 'takeaway',
+        table_id: formData.table_id || null,
+        session_id: formData.session_id || null,
         status: 'draft' // BƯỚC 1: Tạo đơn nháp trước để nhận ID
       })
       .select()
