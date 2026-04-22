@@ -58,8 +58,8 @@ export default function Register() {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7);
 
-        // Call RPC v3: Security-Hardened (No p_user_id passed, DB gets it from JWT)
-        const { error: rpcError } = await supabase.rpc('create_new_shop_v3', {
+        // Call RPC v5: Hardened Production Version (Input Validation + Anti-Spam)
+        const { error: rpcError } = await supabase.rpc('create_new_shop_v5', {
           p_shop_name: shopName,
           p_shop_code: generateShopCode(),
           p_full_name: fullName,

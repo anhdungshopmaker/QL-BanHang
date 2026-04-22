@@ -29,7 +29,7 @@ export default function Login() {
         const staffCode = (formData.get('staffCode') as string).toUpperCase();
         const username = (formData.get('username') as string).toLowerCase();
 
-        // 1. Find shop
+        // 1. Find Shop
         const { data: shop, error: shopErr } = await supabase
           .from('shops')
           .select('id')
@@ -38,16 +38,25 @@ export default function Login() {
         
         if (shopErr || !shop) throw new Error('Mã cửa hàng không tồn tại');
 
-        // 2. Find user profile to get email
+        // 2. Find Profile (Filter by identifiers first)
         const { data: profile, error: profErr } = await supabase
           .from('profiles')
-          .select('email, role')
-          .eq('shop_id', shop.id)
+          .select('email, role, shop_id')
           .eq('staff_code', staffCode)
           .eq('username', username)
           .single();
         
-        if (profErr || !profile) throw new Error('Thông tin đăng nhập hoặc mã nhân viên không đúng');
+        if (profErr || !profile) {
+          throw new Error('Mã nhân viên hoặc Username không đúng');
+        }
+
+        // 3. Access Control: Super Admin bypasses shop check, others must match
+        if (profile.role !== 'super_admin') {
+          if (profile.shop_id !== shop.id) {
+            throw new Error('Tài khoản không thuộc cửa hàng này');
+          }
+        }
+        
         email = profile.email;
       } else {
         email = formData.get('email') as string;
