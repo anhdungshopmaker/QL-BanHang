@@ -53,19 +53,18 @@ export default function IngredientManagement() {
     i.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ fontFamily: 'Arial, sans-serif' }}>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Kho NguyÃªn liá»‡u</h1>
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Quáº£n lÃ½ Ä‘á»‹nh má»©c & GiÃ¡ vá»‘n</p>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Kho Nguyên liệu</h1>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Quản lý định mức & Giá vốn</p>
         </div>
         <button 
           onClick={() => setShowAddModal(true)}
           className="bg-slate-900 hover:bg-indigo-600 text-white font-black px-6 py-4 rounded-2xl flex items-center gap-2 shadow-xl shadow-slate-200 transition-all active:scale-95"
         >
           <Plus size={20} />
-          THÃŠM NGUYÃŠN LIá»†U
+          THÊM NGUYÊN LIỆU
         </button>
       </div>
 
@@ -77,7 +76,7 @@ export default function IngredientManagement() {
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="TÃ¬m tÃªn nguyÃªn liá»‡u..."
+                placeholder="Tìm tên nguyên liệu..."
                 className="w-full bg-slate-50 border-none rounded-xl pl-10 pr-4 py-2.5 text-xs font-bold outline-none ring-2 ring-transparent focus:ring-indigo-100"
               />
            </div>
@@ -87,10 +86,10 @@ export default function IngredientManagement() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50">
-                <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">TÃªn nguyÃªn liá»‡u</th>
-                <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">ÄÆ¡n vá»‹</th>
-                <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">GiÃ¡ vá»‘n / ÄÆ¡n vá»‹</th>
-                <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Thao tÃ¡c</th>
+                <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tên nguyên liệu</th>
+                <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Đơn vị</th>
+                <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Giá vốn / Đơn vị</th>
+                <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -99,7 +98,7 @@ export default function IngredientManagement() {
                   <tr key={i} className="animate-pulse"><td colSpan={4} className="p-10"><div className="h-4 bg-slate-50 rounded w-full"></div></td></tr>
                 ))
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={4} className="p-20 text-center text-xs font-bold text-slate-300 uppercase italic">KhÃ´ng tÃ¬m tháº¥y káº¿t quáº£</td></tr>
+                <tr><td colSpan={4} className="p-20 text-center text-xs font-bold text-slate-300 uppercase italic">Không tìm thấy kết quả</td></tr>
               ) : filtered.map(ing => (
                 <tr key={ing.id} className="hover:bg-slate-50/50 transition-all group">
                   <td className="p-6">
@@ -128,26 +127,26 @@ export default function IngredientManagement() {
       {showAddModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
            <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in-95 duration-200">
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-8">NguyÃªn liá»‡u má»›i</h2>
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-8">Nguyên liệu mới</h2>
               <form onSubmit={handleAddIngredient} className="space-y-6">
                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">TÃªn nguyÃªn liá»‡u / Váº­t tÆ°</label>
-                    <input name="name" type="text" placeholder="VD: Háº¡t cÃ  phÃª robusta" required className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3.5 text-sm font-bold outline-none focus:border-indigo-500" />
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tên nguyên liệu / Vật tư</label>
+                    <input name="name" type="text" placeholder="VD: Hạt cà phê robusta" required className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3.5 text-sm font-bold outline-none focus:border-indigo-500" />
                  </div>
                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">ÄÆ¡n vá»‹ (Kg, L, Gram...)</label>
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Đơn vị (Kg, L, Gram...)</label>
                        <input name="unit" type="text" placeholder="Kg" required className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3.5 text-sm font-bold outline-none focus:border-indigo-500" />
                     </div>
                     <div className="space-y-2">
-                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">GiÃ¡ nháº­p / ÄÆ¡n vá»‹</label>
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Giá nhập / Đơn vị</label>
                        <input name="unit_cost" type="number" placeholder="250000" required className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3.5 text-sm font-bold outline-none focus:border-indigo-500" />
                     </div>
                  </div>
                  <div className="flex gap-4 pt-4">
-                    <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-slate-400">Há»§y</button>
+                    <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-slate-400">Hủy</button>
                     <button disabled={saving} type="submit" className="flex-[2] bg-slate-900 text-white font-black py-4 rounded-xl shadow-xl flex items-center justify-center gap-2">
-                       {saving ? <Loader2 size={18} className="animate-spin" /> : 'LÆ¯U Dá»® LIá»†U'}
+                       {saving ? <Loader2 size={18} className="animate-spin" /> : 'LƯU DỮ LIỆU'}
                     </button>
                  </div>
               </form>

@@ -31,26 +31,20 @@ export default function InventoryDashboard() {
     
     const change = parseFloat(amount);
     
-    // 1. Update ingredient quantity
+    // 1. ATOMIC UPDATE: Gọi thẳng hàm chuẩn SaaS (vừa update kho, vừa lock, vừa ghi log)
     const { error: updErr } = await supabase.rpc('increment_stock', { 
-        row_id: showStockModal.id, 
-        amount: change 
+        p_ingredient_id: showStockModal.id, 
+        p_amount: change,
+        p_reason: 'Nhập hàng thủ công'
     });
 
-    // Fallback if rpc is not defined:
     if (updErr) {
-        await supabase.from('ingredients').update({ 
-            stock_quantity: (showStockModal.stock_quantity || 0) + change 
-        }).eq('id', showStockModal.id);
+        alert(updErr.message || 'Lỗi cập nhật kho');
+        setSaving(false);
+        return;
     }
 
-    // 2. Log change
-    await supabase.from('inventory_logs').insert({
-        ingredient_id: showStockModal.id,
-        change_amount: change,
-        reason: 'Nhập hàng thủ công'
-    });
-
+    alert('Cập nhật tồn kho thành công!');
     setShowStockModal(null);
     setAmount('');
     fetchData();
