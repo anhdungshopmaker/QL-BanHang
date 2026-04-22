@@ -54,16 +54,46 @@ export async function processCheckoutAction(formData: {
         created_by_name: profile.full_name,
         total_amount: serverTotal,
         discount_total: serverCalculatedDiscount,
-        status: 'completed'
+        status: 'draft' // BƯỚC 1: Tạo đơn nháp trước để nhận ID
       })
       .select()
       .single()
 
     if (orderErr) throw orderErr
 
-    // 4. Create Order Items
+    // 4. Buid BOM Snapshots & Create Order Items
+    const productIds = formData.cart.filter(i => !i.is_manual).map(i => i.id)
+    let allRecipes: any[] = []
+    if (productIds.length > 0) {
+      const { data: boms } = await supabase
+        .from('product_ingredients')
+        .select(`
+          product_id,
+          quantity,
+          ingredient:ingredients(id, name, cost_price)
+        `)
+        .in('product_id', productIds)
+      if (boms) allRecipes = boms
+    }
+
     const orderItems = formData.cart.map(item => {
       const itemDiscountValue = item.discountType === 'percent' ? (item.price * (item.discount || 0) / 100) : (item.discount || 0)
+      
+      // Build Snapshot cho sản phẩm này
+      let snapshot = null
+      if (!item.is_manual) {
+         const itemRecipes = allRecipes.filter(r => r.product_id === item.id)
+         if (itemRecipes.length > 0) {
+           snapshot = itemRecipes.map(r => ({
+              ingredient_id: r.ingredient.id,
+              ingredient_name: r.ingredient.name,
+              quantity_per_unit: r.quantity,
+              total_used: r.quantity * item.quantity,
+              cost_price: r.ingredient.cost_price || 0 // Snapshot giá vốn để tính lợi nhuận
+           }))
+         }
+      }
+
       return {
         order_id: order.id,
         product_id: item.is_manual ? null : item.id,
@@ -71,12 +101,20 @@ export async function processCheckoutAction(formData: {
         quantity: item.quantity,
         price_original: item.price,
         discount: itemDiscountValue,
-        final_price: item.price - itemDiscountValue
+        final_price: item.price - itemDiscountValue,
+        recipe_snapshot: snapshot // Lưu snapshot bất biến
       }
     })
 
     const { error: itemsErr } = await supabase.from('order_items').insert(orderItems)
     if (itemsErr) throw itemsErr
+
+    // 4.5. BƯỚC CHỐT: Chuyển trạng thái sang completed để kích hoạt Trigger trừ kho
+    const { error: finalizeErr } = await supabase
+      .from('orders')
+      .update({ status: 'completed' })
+      .eq('id', order.id)
+    if (finalizeErr) throw finalizeErr
 
     // 5. AUDIT LOG (SaaS Standard)
     await supabase.from('audit_logs').insert({
