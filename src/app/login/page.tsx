@@ -70,11 +70,13 @@ export default function Login() {
 
       if (authError) throw authError;
 
-      // 4. IMPORTANT: Force session sync to avoid RLS timing issues
+      // 4. IMPORTANT: Force session sync to avoid RLS/SSR timing issues
       await supabase.auth.getSession();
+      
+      // 5. Tell Next.js to refresh current route to update server-side cookies
       router.refresh();
 
-      // 5. VERIFY ROLE for Admin flow
+      // 6. VERIFY ROLE for Admin flow
       if (loginMode === 'standard') {
         const { data: adminProf, error: roleErr } = await supabase
           .from('profiles')
@@ -85,7 +87,7 @@ export default function Login() {
         if (roleErr || !adminProf) {
           console.error('Role check failed:', roleErr);
           await supabase.auth.signOut();
-          throw new Error('Không thể xác minh quyền hạn. Vui lòng thử lại sau giây lát.');
+          throw new Error('Đang đồng bộ quyền hạn... Vui lòng thử lại sau 2 giây.');
         }
 
         if (adminProf.role !== 'super_admin') {
@@ -94,7 +96,11 @@ export default function Login() {
         }
       }
 
-      router.push('/dashboard');
+      // 7. Small delay to ensure cookies are fully committed before server-side redirect
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 100);
+      
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Đăng nhập thất bại');
