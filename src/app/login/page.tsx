@@ -25,9 +25,9 @@ export default function Login() {
       let email = '';
 
       if (loginMode === 'enterprise') {
-        const shopCode = (formData.get('shopCode') as string).toUpperCase();
-        const staffCode = (formData.get('staffCode') as string).toUpperCase();
-        const username = (formData.get('username') as string).toLowerCase();
+        const shopCode = (formData.get('shopCode') as string).trim().toUpperCase();
+        const staffCode = (formData.get('staffCode') as string).trim().toUpperCase();
+        const username = (formData.get('username') as string).trim().toLowerCase();
 
         // 1. Find Shop
         const { data: shop, error: shopErr } = await supabase
@@ -36,9 +36,9 @@ export default function Login() {
           .eq('code', shopCode)
           .single();
         
-        if (shopErr || !shop) throw new Error('Mã cửa hàng không tồn tại');
+        if (shopErr || !shop) throw new Error('Mã cửa hàng "' + shopCode + '" không tồn tại');
 
-        // 2. Find Profile (Filter by identifiers first)
+        // 2. Find Profile
         const { data: profile, error: profErr } = await supabase
           .from('profiles')
           .select('email, role, shop_id')
@@ -47,10 +47,10 @@ export default function Login() {
           .single();
         
         if (profErr || !profile) {
-          throw new Error('Mã nhân viên hoặc Username không đúng');
+          throw new Error('Username hoặc Mã nhân viên không chính xác');
         }
 
-        // 3. Access Control: Super Admin bypasses shop check, others must match
+        // 3. Access Control
         if (profile.role !== 'super_admin') {
           if (profile.shop_id !== shop.id) {
             throw new Error('Tài khoản không thuộc cửa hàng này');
@@ -59,7 +59,7 @@ export default function Login() {
         
         email = profile.email;
       } else {
-        email = formData.get('email') as string;
+        email = (formData.get('email') as string || '').trim().toLowerCase();
       }
 
       // 3. Auth with Supabase
