@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { 
   ShieldCheck, Store, Lock, Unlock, Hash, Calendar, Loader2, 
   Search, ExternalLink, Plus, Users, DollarSign, X, 
-  TrendingUp, Clock, UserPlus, KeyRound, Save, Trash2
+  TrendingUp, Clock, UserPlus, KeyRound, Save, Trash2, Settings
 } from 'lucide-react';
 
 export default function SuperAdminDashboard() {
