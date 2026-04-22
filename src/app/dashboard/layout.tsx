@@ -60,19 +60,37 @@ export default async function DashboardLayout({
               <button className="p-2 bg-slate-100 rounded-lg text-slate-500"><Menu size={20} /></button>
               <h1 className="font-black text-slate-900">POS SAAS</h1>
             </div>
-            <div className="hidden lg:block">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{getGreeting()}</p>
-              <h1 className="text-lg font-black text-slate-900 leading-none">{profile?.full_name || 'Quản lý'} 👋</h1>
-              <p className="text-[10px] font-bold text-indigo-500 mt-1 uppercase tracking-tight">@{profile?.username} | ID: {profile?.staff_code || 'ADMIN'}</p>
+            <div className="hidden lg:flex items-center gap-8">
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{getGreeting()}</p>
+                <h1 className="text-lg font-black text-slate-900 leading-none mt-1">{profile?.full_name || 'Người dùng'} 👋</h1>
+                <p className="text-[10px] font-black text-indigo-500 mt-1.5 uppercase tracking-widest">Vai trò: {profile?.role?.toUpperCase() || 'STAFF'}</p>
+              </div>
+
+              {profile?.shops && (
+                <div className="h-10 w-px bg-slate-200 mx-2"></div>
+              )}
+              
+              {profile?.shops && (
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Đang làm việc tại</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <h2 className="text-base font-black text-indigo-900">{profile.shops.name}</h2>
+                    <span className="text-[10px] font-black bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-md uppercase border border-indigo-100">
+                      MÃ: {profile.shops.code}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="flex items-center gap-4">
               <div className="text-right hidden sm:block">
-                 <p className="text-xs font-black text-slate-900">{profile?.shops?.code || 'SYSTEM'}</p>
-                 <p className="text-[9px] font-black text-indigo-500 uppercase tracking-tighter bg-indigo-50 px-1.5 py-0.5 rounded-md mt-1">Gói Premium</p>
+                 <p className="text-xs font-black text-slate-900">{profile?.email || 'System'}</p>
+                 <p className="text-[9px] font-black text-emerald-600 uppercase tracking-tighter bg-emerald-50 px-2 py-0.5 rounded-md mt-1 inline-block border border-emerald-100">Đang hoạt động</p>
               </div>
-              <div className="w-10 h-10 bg-slate-200 rounded-full border-2 border-white shadow-sm overflow-hidden flex items-center justify-center font-black text-slate-500 text-sm italic">
-                {profile?.full_name?.[0] || 'U'}
+              <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200 flex items-center justify-center font-black text-lg">
+                {profile?.full_name?.[0]?.toUpperCase() || 'U'}
               </div>
             </div>
          </header>
