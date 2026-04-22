@@ -44,7 +44,7 @@ export default function Register() {
       // For Phase 1 demo, we'll assume a profile is created via trigger
       
       if (mode === 'create') {
-        // Create new shop with AB123 format and 7-day expiry
+        // Prepare data for RPC
         const generateShopCode = () => {
           const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
           const l1 = letters[Math.floor(Math.random() * letters.length)];
@@ -53,36 +53,21 @@ export default function Register() {
           return `${l1}${l2}${n()}${n()}${n()}`;
         };
 
-        const shopCode = generateShopCode();
+        const adminStaffCode = generateShopCode().substring(0, 4);
         const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7); // Free trial 7 days
+        expiresAt.setDate(expiresAt.getDate() + 7);
 
-        // Auto-generate Admin's staff code and username
-        const adminStaffCode = generateShopCode().substring(0, 4); // AB12 format
-        const adminUsername = 'admin'; // Default username for primary owner
+        // Call RPC v3: Security-Hardened (No p_user_id passed, DB gets it from JWT)
+        const { error: rpcError } = await supabase.rpc('create_new_shop_v3', {
+          p_shop_name: shopName,
+          p_shop_code: generateShopCode(),
+          p_full_name: fullName,
+          p_username: 'admin',
+          p_staff_code: adminStaffCode,
+          p_expires_at: expiresAt.toISOString()
+        });
 
-        const { data: shop, error: shopError } = await supabase
-          .from('shops')
-          .insert({ 
-            name: shopName, 
-            code: shopCode,
-            expires_at: expiresAt.toISOString()
-          })
-          .select()
-          .single();
-
-        if (shopError) throw shopError;
-
-        // Update profile role and identifiers
-        await supabase
-          .from('profiles')
-          .update({ 
-            shop_id: shop.id, 
-            role: 'shop_admin',
-            username: adminUsername,
-            staff_code: adminStaffCode
-          })
-          .eq('id', authData.user.id);
+        if (rpcError) throw rpcError;
 
       } else if (mode === 'join') {
         // Join existing shop
@@ -98,7 +83,12 @@ export default function Register() {
         // Update profile role
         await supabase
           .from('profiles')
-          .update({ shop_id: invite.shop_id, role: invite.role })
+          .update({ 
+             shop_id: invite.shop_id, 
+             role: invite.role,
+             username: fullName.split(' ')[0].toLowerCase() + Math.floor(10 + Math.random() * 90),
+             staff_code: generateShopCode().substring(0, 4)
+          })
           .eq('id', authData.user.id);
 
         // Mark invite as used
