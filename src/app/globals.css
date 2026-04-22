@@ -7,7 +7,7 @@
 body {
   color: rgb(var(--foreground-rgb));
   background: white;
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 /* Custom Scrollbar for a premium feel */
