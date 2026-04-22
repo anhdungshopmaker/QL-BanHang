@@ -34,7 +34,14 @@ export default function Sidebar({ profile }: { profile: any }) {
           </div>
           <div>
             <h2 className="text-sm font-black text-slate-900 leading-none truncate w-40">{profile?.shops?.name || 'Cửa hàng hệ thống'}</h2>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{profile?.role}</p>
+            <div className="flex items-center gap-2 mt-1.5">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{profile?.role}</p>
+              {profile?.shops?.code && (
+                <span className="text-[9px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase">
+                  {profile.shops.code}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
