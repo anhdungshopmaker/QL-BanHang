@@ -245,7 +245,7 @@ export default function SuperAdminDashboard() {
               </div>
               <div className="p-8 space-y-6">
                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tên cửa hàng</ts-label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tên cửa hàng</label>
                     <input 
                       type="text" value={newShop.name} onChange={e => setNewShop({...newShop, name: e.target.value})}
                       className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-sm font-bold outline-none focus:ring-2 ring-indigo-500/20" 
