@@ -106,60 +106,24 @@ export default function POSInterface() {
     return Math.max(0, itemsTotal - finalOrderDiscount);
   };
 
-  // XỬ LÝ THANH TOÁN (LƯU ĐẦY ĐỦ THÔNG TIN GIÁ GỐC + GIẢM GIÁ)
+  // XỬ LÝ THANH TOÁN (SERVER ACTION VERSION)
   const handleCheckout = async () => {
     if (cart.length === 0) return;
     setCheckingOut(true);
     
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: profile } = await supabase.from('profiles').select('shop_id, full_name').eq('id', user?.id).single();
+      const { processCheckoutAction } = await import('@/app/actions/pos');
       
-      const finalTotal = calculateTotal();
-      
-      let finalOrderDiscountValue = 0;
-      const itemsTotalBeforeOrderDiscount = cart.reduce((sum, item) => {
-          let itemDiscount = item.discountType === 'percent' ? (item.price * item.discount / 100) : item.discount;
-          return sum + (item.price - itemDiscount) * item.quantity;
-      }, 0);
-
-      if (orderDiscountType === 'percent') {
-        finalOrderDiscountValue = (itemsTotalBeforeOrderDiscount * orderDiscount) / 100;
-      } else {
-        finalOrderDiscountValue = orderDiscount;
-      }
-
-      // 1. Tạo đơn hàng tổng [orders]
-      const { data: order, error: orderErr } = await supabase
-        .from('orders')
-        .insert({ 
-            shop_id: profile?.shop_id, 
-            profile_id: user?.id,
-            created_by_name: profile?.full_name, // Snapshot tên người bán
-            total_amount: finalTotal,
-            discount_total: finalOrderDiscountValue, // Lưu giá trị tiền mặt đã giảm
-            status: 'completed'
-        })
-        .select().single();
-
-      if (orderErr) throw orderErr;
-
-      // 2. Tạo chi tiết món [order_items] (Lưu giá chi tiết để báo cáo)
-      const orderItems = cart.map(item => {
-        const itemDiscountValue = item.discountType === 'percent' ? (item.price * (item.discount || 0) / 100) : (item.discount || 0);
-        return {
-          order_id: order.id,
-          product_id: item.is_manual ? null : item.id,
-          manual_name: item.is_manual ? item.name : null,
-          quantity: item.quantity,
-          price_original: item.price,
-          discount: itemDiscountValue,
-          final_price: item.price - itemDiscountValue
-        };
+      const result = await processCheckoutAction({
+        cart,
+        orderDiscount,
+        orderDiscountType,
+        finalTotal: calculateTotal()
       });
 
-      const { error: itemsErr } = await supabase.from('order_items').insert(orderItems);
-      if (itemsErr) throw itemsErr;
+      if (!result.success) {
+        throw new Error(result.error);
+      }
 
       showToast('Thanh toán thành công!');
       setCart([]);

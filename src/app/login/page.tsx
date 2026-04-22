@@ -70,21 +70,30 @@ export default function Login() {
 
       if (authError) throw authError;
 
-      // 4. VERIFY ROLE for Admin flow
+      // 4. IMPORTANT: Force session sync to avoid RLS timing issues
+      await supabase.auth.getSession();
+      router.refresh();
+
+      // 5. VERIFY ROLE for Admin flow
       if (loginMode === 'standard') {
-        const { data: adminProf } = await supabase
+        const { data: adminProf, error: roleErr } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', user?.id)
           .single();
         
-        if (adminProf?.role !== 'super_admin') {
+        if (roleErr || !adminProf) {
+          console.error('Role check failed:', roleErr);
+          await supabase.auth.signOut();
+          throw new Error('Không thể xác minh quyền hạn. Vui lòng thử lại sau giây lát.');
+        }
+
+        if (adminProf.role !== 'super_admin') {
           await supabase.auth.signOut();
           throw new Error('Bạn không có quyền truy cập vào khu vực Hệ thống');
         }
       }
 
-      router.refresh();
       router.push('/dashboard');
     } catch (err: any) {
       console.error(err);

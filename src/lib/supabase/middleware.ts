@@ -33,7 +33,6 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // PROTECT ROUTES:
   // 1. If no user and trying to access dashboard -> Redirect to login
   if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
     const url = request.nextUrl.clone()
@@ -41,11 +40,38 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // 2. If user exists and trying to access login/register -> Redirect to dashboard
-  if (user && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register'))) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+  // 2. If user exists
+  if (user) {
+    // A. Always redirect from login/register to dashboard
+    if (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register')) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
+
+    // B. ROLE & STATUS CHECK (SaaS Security Guard)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, is_active')
+      .eq('id', user.id)
+      .single()
+
+    // B1. Kick out deactivated users immediately
+    if (profile?.is_active === false) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      url.searchParams.set('error', 'account_deactivated')
+      // Important: This doesn't sign out from Auth, but blocks access
+      // For full security, we'd use a server action or route to sign out
+      return NextResponse.redirect(url)
+    }
+
+    // B2. Protect Admin routes
+    if (request.nextUrl.pathname.startsWith('/dashboard/admin') && profile?.role !== 'super_admin') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse
