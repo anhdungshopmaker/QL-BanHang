@@ -58,7 +58,7 @@ export default function InventoryDashboard() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ fontFamily: 'Arial, sans-serif' }}>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Quản lý Tồn kho</h1>
