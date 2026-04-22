@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Building2, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { Store, User2, Lock, Hash, ArrowRight, Loader2, ShieldCheck, KeyRound } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loginMode, setLoginMode] = useState<'standard' | 'enterprise'>('enterprise');
   const router = useRouter();
   const supabase = createClient();
 
@@ -18,70 +19,145 @@ export default function Login() {
     setError(null);
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
     try {
+      let email = '';
+
+      if (loginMode === 'enterprise') {
+        const shopCode = (formData.get('shopCode') as string).toUpperCase();
+        const staffCode = (formData.get('staffCode') as string).toUpperCase();
+        const username = (formData.get('username') as string).toLowerCase();
+
+        // 1. Find shop
+        const { data: shop, error: shopErr } = await supabase
+          .from('shops')
+          .select('id')
+          .eq('code', shopCode)
+          .single();
+        
+        if (shopErr || !shop) throw new Error('Mã cửa hàng không tồn tại');
+
+        // 2. Find user profile to get email
+        const { data: profile, error: profErr } = await supabase
+          .from('profiles')
+          .select('email, role')
+          .eq('shop_id', shop.id)
+          .eq('staff_code', staffCode)
+          .eq('username', username)
+          .single();
+        
+        if (profErr || !profile) throw new Error('Thông tin đăng nhập hoặc mã nhân viên không đúng');
+        email = profile.email;
+      } else {
+        email = formData.get('email') as string;
+      }
+
+      // 3. Auth with Supabase
       const { error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (authError) throw authError;
+
       router.refresh();
       router.push('/dashboard');
     } catch (err: any) {
-      setError('Email hoặc mật khẩu không chính xác, vui lòng kiểm tra lại.');
+      console.error(err);
+      setError(err.message || 'Đăng nhập thất bại');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-10 relative overflow-hidden border border-slate-100">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4" style={{ fontFamily: 'Arial, sans-serif' }}>
+      <div className="w-full max-w-md bg-white rounded-[3rem] shadow-2xl p-10 relative overflow-hidden border border-slate-100">
         <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
-          <Building2 size={200} className="-rotate-12" />
+          <Store size={200} className="rotate-12" />
         </div>
 
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-10">
+          <div className="flex items-center gap-3 mb-8">
             <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-200">
-              <Building2 size={24} />
+              <ShieldCheck size={24} />
             </div>
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900 leading-none">POS SAAS</h1>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1.5">Management Portal</p>
+              <h1 className="text-2xl font-black tracking-tight text-slate-900 leading-none">POS LOGIN</h1>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1.5">Truy cập hệ thống</p>
             </div>
           </div>
 
+          <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-8">
+            <button 
+              onClick={() => setLoginMode('enterprise')}
+              className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${loginMode === 'enterprise' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Mã Nhân Viên
+            </button>
+            <button 
+              onClick={() => setLoginMode('standard')}
+              className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${loginMode === 'standard' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Email Cá Nhân
+            </button>
+          </div>
+
           <form onSubmit={handleLogin} className="space-y-4">
-            <div className="relative">
-              <Mail className="absolute left-4 top-4 text-slate-400" size={18} />
-              <input name="email" type="email" placeholder="Email của bạn" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-medium" />
-            </div>
+            {loginMode === 'enterprise' ? (
+              <>
+                <div className="relative">
+                  <Hash className="absolute left-4 top-4 text-slate-400" size={18} />
+                  <input name="shopCode" type="text" placeholder="Mã cửa hàng (VD: AB123)" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-black text-indigo-600 placeholder:font-bold" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="relative">
+                    <User2 className="absolute left-4 top-4 text-slate-400" size={18} />
+                    <input name="username" type="text" placeholder="Tên user" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-bold" />
+                  </div>
+                  <div className="relative">
+                    <Hash className="absolute left-4 top-4 text-slate-400" size={18} />
+                    <input name="staffCode" type="text" placeholder="Mã NV" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-bold" />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="relative">
+                <User2 className="absolute left-4 top-4 text-slate-400" size={18} />
+                <input name="email" type="email" placeholder="Email đăng nhập" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-medium" />
+              </div>
+            )}
 
             <div className="relative">
               <Lock className="absolute left-4 top-4 text-slate-400" size={18} />
-              <input name="password" type="password" placeholder="Mật khẩu" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-medium" />
+              <input name="password" type="password" placeholder="Mật khẩu" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-medium" />
             </div>
 
-            {error && <p className="text-xs font-bold text-rose-500 px-2">{error}</p>}
+            {error && (
+              <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl">
+                 <p className="text-[11px] font-black text-rose-500 uppercase tracking-tighter">{error}</p>
+              </div>
+            )}
 
             <button disabled={loading} type="submit" className="w-full bg-indigo-600 hover:bg-slate-900 text-white font-black py-5 rounded-2xl shadow-xl shadow-indigo-100 transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50">
               {loading ? <Loader2 className="animate-spin" size={20} /> : (
                 <>
-                  ĐĂNG NHẬP HỆ THỐNG
+                  ĐĂNG NHẬP NGAY
                   <ArrowRight size={20} />
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-10 pt-10 border-t border-slate-100 flex flex-col gap-4">
-            <p className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest">
-              Gia nhập cửa hàng mới? <Link href="/register" className="text-indigo-600 hover:underline">Đăng ký ngay</Link>
-            </p>
+          <div className="mt-10 pt-6 border-t border-slate-50 text-center space-y-4">
+             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+               Quản trị viên? <Link href="/register" className="text-indigo-600 hover:underline">Đăng ký shop mới</Link>
+             </p>
+             <div className="flex items-center justify-center gap-2 text-slate-300">
+                <ShieldCheck size={14} />
+                <span className="text-[9px] font-black uppercase tracking-[0.2em]">Secure SaaS POS v2.0</span>
+             </div>
           </div>
         </div>
       </div>

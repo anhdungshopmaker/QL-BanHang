@@ -57,7 +57,8 @@ export default async function DashboardLayout({
             </div>
             <div className="hidden lg:block">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{getGreeting()}</p>
-              <h1 className="text-lg font-black text-slate-900">{profile?.full_name || 'Quản lý'} 👋</h1>
+              <h1 className="text-lg font-black text-slate-900 leading-none">{profile?.full_name || 'Quản lý'} 👋</h1>
+              <p className="text-[10px] font-bold text-indigo-500 mt-1 uppercase tracking-tight">@{profile?.username} | ID: {profile?.staff_code || 'ADMIN'}</p>
             </div>
             
             <div className="flex items-center gap-4">

@@ -44,20 +44,44 @@ export default function Register() {
       // For Phase 1 demo, we'll assume a profile is created via trigger
       
       if (mode === 'create') {
-        // Create new shop
-        const shopCode = 'S' + Math.floor(1000 + Math.random() * 9000);
+        // Create new shop with AB123 format and 7-day expiry
+        const generateShopCode = () => {
+          const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+          const l1 = letters[Math.floor(Math.random() * letters.length)];
+          const l2 = letters[Math.floor(Math.random() * letters.length)];
+          const n = () => Math.floor(Math.random() * 10);
+          return `${l1}${l2}${n()}${n()}${n()}`;
+        };
+
+        const shopCode = generateShopCode();
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7); // Free trial 7 days
+
+        // Auto-generate Admin's staff code and username
+        const adminStaffCode = generateShopCode().substring(0, 4); // AB12 format
+        const adminUsername = 'admin'; // Default username for primary owner
+
         const { data: shop, error: shopError } = await supabase
           .from('shops')
-          .insert({ name: shopName, code: shopCode })
+          .insert({ 
+            name: shopName, 
+            code: shopCode,
+            expires_at: expiresAt.toISOString()
+          })
           .select()
           .single();
 
         if (shopError) throw shopError;
 
-        // Update profile role
+        // Update profile role and identifiers
         await supabase
           .from('profiles')
-          .update({ shop_id: shop.id, role: 'shop_admin' })
+          .update({ 
+            shop_id: shop.id, 
+            role: 'shop_admin',
+            username: adminUsername,
+            staff_code: adminStaffCode
+          })
           .eq('id', authData.user.id);
 
       } else if (mode === 'join') {

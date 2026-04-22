@@ -9,30 +9,35 @@ export default function ReportsPage() {
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('today');
+  const [userRole, setUserRole] = useState('staff');
   const supabase = createClient();
 
   const fetchReports = async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-    const { data: profile } = await supabase.from('profiles').select('shop_id').eq('id', user?.id).single();
+    const { data: profile } = await supabase.from('profiles').select('shop_id, role').eq('id', user?.id).single();
 
     if (!profile?.shop_id) { setLoading(false); return; }
+    setUserRole(profile.role);
 
-    // Build date filter based on timeRange
+    // If staff, force today
+    const currentRange = profile.role === 'staff' ? 'today' : timeRange;
+
+    // Build date filter based on currentRange
     const now = new Date();
     let startDate: string | null = null;
     let endDate: string = now.toISOString();
 
-    if (timeRange === 'today') {
+    if (currentRange === 'today') {
       const d = new Date(now); d.setHours(0,0,0,0);
       startDate = d.toISOString();
-    } else if (timeRange === 'week') {
+    } else if (currentRange === 'week') {
       const d = new Date(now); d.setDate(d.getDate() - 7);
       startDate = d.toISOString();
-    } else if (timeRange === 'month') {
+    } else if (currentRange === 'month') {
       const d = new Date(now); d.setMonth(d.getMonth() - 1);
       startDate = d.toISOString();
-    } else if (timeRange === 'year') {
+    } else if (currentRange === 'year') {
       const d = new Date(now); d.setFullYear(d.getFullYear() - 1);
       startDate = d.toISOString();
     }
@@ -95,17 +100,19 @@ export default function ReportsPage() {
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Trung tâm Báo cáo</h1>
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Phân tích kinh doanh & Lợi nhuận</p>
         </div>
-        <div className="flex bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm">
-           {['today', 'week', 'month', 'year'].map(r => (
-             <button 
-              key={r}
-              onClick={() => setTimeRange(r)}
-              className={`px-6 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${timeRange === r ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-600'}`}
-             >
-               {r === 'today' ? 'Hôm nay' : r === 'week' ? 'Tuần' : r === 'month' ? 'Tháng' : 'Năm'}
-             </button>
-           ))}
-        </div>
+        {userRole === 'shop_admin' && (
+          <div className="flex bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm">
+             {['today', 'week', 'month', 'year'].map(r => (
+               <button 
+                key={r}
+                onClick={() => setTimeRange(r)}
+                className={`px-6 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${timeRange === r ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-600'}`}
+               >
+                 {r === 'today' ? 'Hôm nay' : r === 'week' ? 'Tuần' : r === 'month' ? 'Tháng' : 'Năm'}
+               </button>
+             ))}
+          </div>
+        )}
       </div>
 
       {/* Summary Cards */}
