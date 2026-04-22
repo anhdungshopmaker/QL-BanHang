@@ -114,6 +114,8 @@ export async function processCheckoutAction(formData: {
         price_original: item.price,
         discount: itemDiscountValue,
         final_price: item.price - itemDiscountValue,
+        note: item.note || null,
+        modifiers: item.selected_modifiers || null,
         recipe_snapshot: snapshot // Lưu snapshot bất biến
       }
     })
