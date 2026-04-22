@@ -113,7 +113,7 @@ export default function POSInterface() {
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const { data: profile } = await supabase.from('profiles').select('shop_id').eq('id', user?.id).single();
+      const { data: profile } = await supabase.from('profiles').select('shop_id, full_name').eq('id', user?.id).single();
       
       const finalTotal = calculateTotal();
       
@@ -135,6 +135,7 @@ export default function POSInterface() {
         .insert({ 
             shop_id: profile?.shop_id, 
             profile_id: user?.id,
+            created_by_name: profile?.full_name, // Snapshot tên người bán
             total_amount: finalTotal,
             discount_total: finalOrderDiscountValue, // Lưu giá trị tiền mặt đã giảm
             status: 'completed'

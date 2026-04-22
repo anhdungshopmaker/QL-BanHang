@@ -127,10 +127,10 @@ export default function EmployeesPage() {
             </thead>
             <tbody className="divide-y divide-slate-50">
                {profiles.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50/30 transition-all group">
+                  <tr key={p.id} className={`hover:bg-slate-50/30 transition-all group ${!p.is_active ? 'opacity-50 grayscale-[0.5]' : ''}`}>
                      <td className="p-6">
                         <div className="flex items-center gap-3">
-                           <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center font-black italic">
+                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black italic ${p.is_active ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-400'}`}>
                               {p.full_name?.[0] || 'U'}
                            </div>
                            <div>
@@ -145,17 +145,33 @@ export default function EmployeesPage() {
                         </span>
                      </td>
                      <td className="p-6">
-                        <span className={`text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-tighter ${p.role === 'shop_admin' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
-                           {p.role === 'shop_admin' ? 'Chủ quán' : 'Nhân viên'}
-                        </span>
+                        <div className="flex flex-col gap-1.5">
+                           <span className={`text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-tighter w-fit ${p.role === 'shop_admin' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
+                              {p.role === 'shop_admin' ? 'Chủ quán' : 'Nhân viên'}
+                           </span>
+                           <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest w-fit ${p.is_active ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+                              {p.is_active ? 'Đang hoạt động' : 'Đã vô hiệu'}
+                           </span>
+                        </div>
                      </td>
                      <td className="p-6 text-xs font-bold text-slate-400">
                         {new Date(p.created_at).toLocaleDateString('vi-VN')}
                      </td>
                      <td className="p-6 text-right">
                         {myProfile?.role === 'shop_admin' && p.role !== 'shop_admin' && (
-                           <button className="p-2 text-rose-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all">
-                              <Trash2 size={18} />
+                           <button 
+                             onClick={async () => {
+                               const newStatus = !p.is_active;
+                               if (confirm(`Bạn có chắc chắn muốn ${newStatus ? 'KÍCH HOẠT LẠI' : 'VÔ HIỆU HÓA'} nhân viên này?`)) {
+                                 const { error } = await supabase.from('profiles').update({ is_active: newStatus }).eq('id', p.id);
+                                 if (error) alert(error.message);
+                                 else fetchData();
+                               }
+                             }}
+                             className={`p-2 rounded-lg transition-all ${p.is_active ? 'text-rose-300 hover:text-rose-600 hover:bg-rose-50' : 'text-emerald-300 hover:text-emerald-600 hover:bg-emerald-50'}`}
+                             title={p.is_active ? 'Vô hiệu hóa' : 'Kích hoạt lại'}
+                           >
+                              {p.is_active ? <X size={18} /> : <UserCheck size={18} />}
                            </button>
                         )}
                      </td>

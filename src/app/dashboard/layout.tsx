@@ -32,8 +32,13 @@ export default async function DashboardLayout({
 
   // SaaS ACCESS CONTROL
   if (profile?.role !== 'super_admin') {
+    // Check if account is active
+    if (profile?.is_active === false) {
+      redirect('/login?error=account_deactivated');
+    }
+
     if (!profile?.shop_id) {
-       // Optional: Redirect to shop creation if allowed for staff
+       // Optional: Redirect to shop creation
     } else {
        const shop = profile.shops;
        const isExpired = shop?.expires_at ? new Date(shop.expires_at) < new Date() : false;
