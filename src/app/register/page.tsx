@@ -138,54 +138,38 @@ export default function Register() {
           </div>
 
           <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-8">
-            <button 
-              onClick={() => setMode('join')}
-              className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${mode === 'join' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              Gia nhập Shop
-            </button>
-            <button 
-              onClick={() => setMode('create')}
-              className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${mode === 'create' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              Tạo Shop mới
-            </button>
+            <div className="flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl bg-white text-indigo-600 shadow-sm text-center">
+              Tạo Shop mới & Dùng thử 7 ngày
+            </div>
           </div>
 
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="relative">
               <User2 className="absolute left-4 top-4 text-slate-400" size={18} />
-              <input name="fullName" type="text" placeholder="Họ và tên" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-medium" />
+              <input name="fullName" type="text" placeholder="Họ và tên của bạn" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-medium" />
             </div>
 
             <div className="relative">
               <Mail className="absolute left-4 top-4 text-slate-400" size={18} />
-              <input name="email" type="email" placeholder="Email đăng ký" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-medium" />
+              <input name="email" type="email" placeholder="Email (dùng để khôi phục)" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-medium" />
             </div>
 
             <div className="relative">
               <Lock className="absolute left-4 top-4 text-slate-400" size={18} />
-              <input name="password" type="password" placeholder="Mật khẩu" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-medium" />
+              <input name="password" type="password" placeholder="Mật khẩu bảo mật" required className="pl-12 w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-medium" />
             </div>
 
-            {mode === 'create' ? (
-              <div className="relative border-t border-slate-100 pt-4 mt-2">
-                <Store className="absolute left-4 top-8 text-slate-400" size={18} />
-                <input name="shopName" type="text" placeholder="Tên cửa hàng của bạn" required={mode === 'create'} className="pl-12 w-full bg-indigo-50/30 border border-indigo-100 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-bold text-indigo-600 placeholder:text-indigo-300" />
-              </div>
-            ) : (
-              <div className="relative border-t border-slate-100 pt-4 mt-2">
-                <LinkIcon className="absolute left-4 top-8 text-slate-400" size={18} />
-                <input name="joinCode" type="text" placeholder="Nhập mã mời (Invite Code)" required={mode === 'join'} className="pl-12 w-full bg-teal-50/30 border border-teal-100 rounded-xl px-4 py-3.5 outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-50 transition-all font-bold text-teal-600 placeholder:text-teal-300" />
-              </div>
-            )}
+            <div className="relative border-t border-slate-100 pt-4 mt-2">
+              <Store className="absolute left-4 top-8 text-slate-400" size={18} />
+              <input name="shopName" type="text" placeholder="Tên cửa hàng / Thương hiệu" required className="pl-12 w-full bg-indigo-50/30 border border-indigo-100 rounded-xl px-4 py-3.5 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all font-bold text-indigo-600 placeholder:text-indigo-300" />
+            </div>
 
             {error && <p className="text-xs font-bold text-rose-500 px-2">{error}</p>}
 
             <button disabled={loading} type="submit" className="w-full bg-indigo-600 hover:bg-slate-900 text-white font-black py-5 rounded-2xl shadow-xl shadow-indigo-100 transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
               {loading ? <Loader2 className="animate-spin" size={20} /> : (
                 <>
-                  {mode === 'create' ? 'KHỞI TẠO HỆ THỐNG' : 'GIA NHẬP NGAY'}
+                  KHỞI TẠO CỬA HÀNG NGAY
                   <ArrowRight size={20} />
                 </>
               )}
