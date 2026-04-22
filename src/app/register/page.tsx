@@ -46,57 +46,41 @@ export default function Register() {
       });
 
       if (authError) throw authError;
-      if (!authData.user) throw new Error('Không thể tạo tài khoản');
+      if (!authData.user) throw new Error('Không thể tạo tài khoản Auth');
 
-      // 2. Handling Shop logic (In production, move this to a secure edge function / route handler)
-      // For Phase 1 demo, we'll assume a profile is created via trigger
+      // 2. IMPORTANT: Sign in immediately to ensure we have a session for RPC
+      // This solves the auth.uid() = NULL issue
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      if (mode === 'create') {
-        // Prepare data for RPC
+      if (signInError) {
+        console.warn('Auto-login failed, but user created. Might need email confirmation.');
+      }
 
-        const adminStaffCode = generateShopCode().substring(0, 4);
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7);
+      // 3. Double check session
+      const { data: { session } } = await supabase.auth.getSession();
 
-        // Call RPC v5: Hardened Production Version (Input Validation + Anti-Spam)
-        const { error: rpcError } = await supabase.rpc('create_new_shop_v5', {
-          p_shop_name: shopName,
-          p_shop_code: generateShopCode(),
-          p_full_name: fullName,
-          p_username: 'admin',
-          p_staff_code: adminStaffCode,
-          p_expires_at: expiresAt.toISOString()
-        });
+      // 4. Handling Shop logic via Hardened RPC v6
+      // v6 generates shop_code internally and handles anti-spam
+      const adminStaffCode = generateShopCode().substring(0, 4);
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
 
-        if (rpcError) throw rpcError;
+      const { data: result, error: rpcError } = await supabase.rpc('create_new_shop_v6', {
+        p_shop_name: shopName,
+        p_full_name: fullName,
+        p_username: 'admin',
+        p_staff_code: adminStaffCode,
+        p_expires_at: expiresAt.toISOString()
+      });
 
-      } else if (mode === 'join') {
-        // Join existing shop
-        const { data: invite, error: inviteError } = await supabase
-          .from('shop_invites')
-          .select('*')
-          .eq('invite_code', joinCode)
-          .eq('is_used', false)
-          .single();
-
-        if (inviteError || !invite) throw new Error('Mã mời không chính xác hoặc đã hết hạn');
-
-        // Update profile role
-        await supabase
-          .from('profiles')
-          .update({ 
-             shop_id: invite.shop_id, 
-             role: invite.role,
-             username: fullName.split(' ')[0].toLowerCase() + Math.floor(10 + Math.random() * 90),
-             staff_code: generateShopCode().substring(0, 4)
-          })
-          .eq('id', authData.user.id);
-
-        // Mark invite as used
-        await supabase
-          .from('shop_invites')
-          .update({ is_used: true })
-          .eq('id', invite.id);
+      if (rpcError) throw rpcError;
+      
+      // If RPC returned a JSON result with success: false
+      if (result && result.success === false) {
+        throw new Error(result.message || 'Lỗi tạo cửa hàng');
       }
 
       router.refresh();
