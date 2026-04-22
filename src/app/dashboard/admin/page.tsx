@@ -208,8 +208,8 @@ export default function SuperAdminDashboard() {
                               </div>
                            </td>
                            <td className="p-6">
-                              <span className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest ${shop.status === 'active' \u0026\u0026 !isExpired ? 'bg-emerald-50 text-emerald-500 border border-emerald-100' : 'bg-rose-50 text-rose-500 border border-rose-100'}`}>
-                                 {shop.status === 'active' \u0026\u0026 !isExpired ? 'Đang chạy' : isExpired ? 'Hết hạn' : 'Đã khóa'}
+                              <span className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest ${shop.status === 'active' && !isExpired ? 'bg-emerald-50 text-emerald-500 border border-emerald-100' : 'bg-rose-50 text-rose-500 border border-rose-100'}`}>
+                                 {shop.status === 'active' && !isExpired ? 'Đang chạy' : isExpired ? 'Hết hạn' : 'Đã khóa'}
                               </span>
                            </td>
                            <td className="p-6 text-right space-x-2">
@@ -236,7 +236,7 @@ export default function SuperAdminDashboard() {
       </div>
 
       {/* CREATE MODAL */}
-      {showCreateModal \u0026\u0026 (
+      {showCreateModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
            <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
               <div className="p-8 border-b border-slate-50 flex items-center justify-between">
@@ -282,7 +282,7 @@ export default function SuperAdminDashboard() {
       )}
 
       {/* MANAGE MODAL */}
-      {showManageModal \u0026\u0026 selectedShop \u0026\u0026 (
+      {showManageModal && selectedShop && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-300">
            <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-[3rem] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
               <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
