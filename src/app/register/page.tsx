@@ -25,6 +25,14 @@ export default function Register() {
     const shopName = formData.get('shopName') as string;
     const joinCode = formData.get('joinCode') as string;
 
+    const generateShopCode = () => {
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const l1 = letters[Math.floor(Math.random() * letters.length)];
+      const l2 = letters[Math.floor(Math.random() * letters.length)];
+      const n = () => Math.floor(Math.random() * 10);
+      return `${l1}${l2}${n()}${n()}${n()}`;
+    };
+
     try {
       // 1. Sign up user
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -45,13 +53,6 @@ export default function Register() {
       
       if (mode === 'create') {
         // Prepare data for RPC
-        const generateShopCode = () => {
-          const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-          const l1 = letters[Math.floor(Math.random() * letters.length)];
-          const l2 = letters[Math.floor(Math.random() * letters.length)];
-          const n = () => Math.floor(Math.random() * 10);
-          return `${l1}${l2}${n()}${n()}${n()}`;
-        };
 
         const adminStaffCode = generateShopCode().substring(0, 4);
         const expiresAt = new Date();
