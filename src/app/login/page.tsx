@@ -70,37 +70,48 @@ export default function Login() {
 
       if (authError) throw authError;
 
-      // 4. IMPORTANT: Force session sync to avoid RLS/SSR timing issues
+      // 4. IMPORTANT: Force session sync
       await supabase.auth.getSession();
-      
-      // 5. Tell Next.js to refresh current route to update server-side cookies
       router.refresh();
 
-      // 6. VERIFY ROLE for Admin flow
-      if (loginMode === 'standard') {
-        const { data: adminProf, error: roleErr } = await supabase
+      // 5. SELF-HEALING PROFILE CHECK
+      // If trigger is slow or fails, we create the profile manually here
+      let { data: profile, error: profErr } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user?.id)
+        .maybeSingle();
+
+      if (!profile) {
+        console.warn('Profile missing after login, self-healing triggered...');
+        const { data: newProfile, error: insertErr } = await supabase
           .from('profiles')
+          .insert({
+            id: user?.id,
+            full_name: user?.user_metadata?.full_name || 'User',
+            role: loginMode === 'standard' ? 'staff' : 'staff', // Will be upgraded by admin flow if needed
+            is_active: true
+          })
           .select('role')
-          .eq('id', user?.id)
           .single();
         
-        if (roleErr || !adminProf) {
-          console.error('Role check failed:', roleErr);
+        if (insertErr) {
+          console.error('Self-healing failed:', insertErr);
           await supabase.auth.signOut();
-          throw new Error('Đang đồng bộ quyền hạn... Vui lòng thử lại sau 2 giây.');
+          throw new Error('Lỗi hệ thống: Không thể khởi tạo hồ sơ. Vui lòng thử lại.');
         }
-
-        if (adminProf.role !== 'super_admin') {
-          await supabase.auth.signOut();
-          throw new Error('Bạn không có quyền truy cập vào khu vực Hệ thống');
-        }
+        profile = newProfile;
       }
 
-      // 7. Small delay to ensure cookies are fully committed before server-side redirect
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 100);
-      
+      // 6. VERIFY ROLE for Admin flow
+      if (loginMode === 'standard' && profile?.role !== 'super_admin') {
+        await supabase.auth.signOut();
+        throw new Error('Tài khoản này không có quyền Quản trị hệ thống');
+      }
+
+      // 7. Small delay for cookie stability
+      await new Promise(r => setTimeout(r, 200));
+      router.push('/dashboard');
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Đăng nhập thất bại');
