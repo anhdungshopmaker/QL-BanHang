@@ -139,6 +139,14 @@ export default function POSInterface() {
     }
   };
 
+  const handleScan = (decodedText: string) => {
+    const product = products.find(p => p.id === decodedText);
+    if (product) {
+      addToCart(product);
+      setShowScanner(false);
+    }
+  };
+
   const filteredProducts = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
