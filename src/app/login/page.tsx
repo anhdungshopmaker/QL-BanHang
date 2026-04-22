@@ -70,47 +70,38 @@ export default function Login() {
 
       if (authError) throw authError;
 
-      // 4. IMPORTANT: Force session sync
+      // 4. IMPORTANT: Sync session
       await supabase.auth.getSession();
+      
+      // 5. SMALL DELAY: Ensure cookies are set before refreshing server state
+      await new Promise(r => setTimeout(r, 300));
       router.refresh();
 
-      // 5. SELF-HEALING PROFILE CHECK
-      // If trigger is slow or fails, we create the profile manually here
-      let { data: profile, error: profErr } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user?.id)
-        .maybeSingle();
-
-      if (!profile) {
-        console.warn('Profile missing after login, self-healing triggered...');
-        const { data: newProfile, error: insertErr } = await supabase
-          .from('profiles')
-          .insert({
-            id: user?.id,
-            full_name: user?.user_metadata?.full_name || 'User',
-            role: loginMode === 'standard' ? 'staff' : 'staff', // Will be upgraded by admin flow if needed
-            is_active: true
-          })
-          .select('role')
-          .single();
-        
-        if (insertErr) {
-          console.error('Self-healing failed:', insertErr);
-          await supabase.auth.signOut();
-          throw new Error('Lỗi hệ thống: Không thể khởi tạo hồ sơ. Vui lòng thử lại.');
-        }
-        profile = newProfile;
-      }
-
       // 6. VERIFY ROLE for Admin flow
-      if (loginMode === 'standard' && profile?.role !== 'super_admin') {
-        await supabase.auth.signOut();
-        throw new Error('Tài khoản này không có quyền Quản trị hệ thống');
+      if (loginMode === 'standard') {
+        const { data: profile, error: profErr } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user?.id)
+          .maybeSingle(); // Prevent crash if 0 rows
+        
+        if (profErr) {
+          console.error('Role verify failed:', profErr);
+          await supabase.auth.signOut();
+          throw new Error('Lỗi truy vấn dữ liệu: ' + profErr.message);
+        }
+
+        if (!profile) {
+           await supabase.auth.signOut();
+           throw new Error('Tài khoản chưa được khởi tạo Hồ sơ. Vui lòng liên hệ hỗ trợ.');
+        }
+
+        if (profile.role !== 'super_admin') {
+          await supabase.auth.signOut();
+          throw new Error('Bạn không có quyền truy cập vào khu vực Hệ thống');
+        }
       }
 
-      // 7. Small delay for cookie stability
-      await new Promise(r => setTimeout(r, 200));
       router.push('/dashboard');
     } catch (err: any) {
       console.error(err);
